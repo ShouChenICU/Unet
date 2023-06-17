@@ -61,7 +61,7 @@ public class Unet {
                 size,
                 0,
                 TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
+                new LinkedBlockingQueue<>(UnetConstant.MAX_JOB_COUNT),
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
     }

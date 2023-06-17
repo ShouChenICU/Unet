@@ -26,5 +26,5 @@ public interface UnetConstant {
     /**
      * Max job count
      */
-    int MAX_JOB_COUNT = 4096;
+    int MAX_JOB_COUNT = 2048;
 }
