@@ -23,7 +23,7 @@ public class Unet {
     private final DatagramChannel datagramChannel;
     private final SelectionKey selectionKey;
     private final UnetPipeline pipeline;
-    private final int bufferSize;
+    private final BufferPool bufferPool;
     private ExecutorService eventLoopExecutor;
 
     public static Unet spawn(UnetConfig config) throws IOException {
@@ -35,8 +35,8 @@ public class Unet {
     }
 
     private Unet(int port, int eventExecutorSize, int bufferSize) throws IOException {
-        this.bufferSize = bufferSize;
         initEventLoopExecutor(eventExecutorSize);
+        bufferPool = new BufferPool(bufferSize, true, eventExecutorSize, eventExecutorSize);
         selector = Selector.open();
         datagramChannel = DatagramChannel.open();
         datagramChannel.socket().setBroadcast(true);
@@ -101,8 +101,8 @@ public class Unet {
         }
         eventLoopExecutor.shutdownNow();
         try {
-            if (eventLoopExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
-                UnetLogger.warn("There is some unfinished task");
+            if (!eventLoopExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
+                UnetLogger.warn("There are some unfinished task");
             }
         } catch (InterruptedException exception) {
             UnetLogger.warn(exception);
@@ -111,9 +111,8 @@ public class Unet {
 
     private void selectLoop() {
         try {
-            int selected = selector.select();
-            if (selected > 0) {
-                final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
+            if (selector.select() > 0) {
+                final ByteBuffer buffer = bufferPool.buffer();
                 final SocketAddress address = datagramChannel.receive(buffer);
                 eventLoopExecutor.execute(() -> {
                     try {
@@ -122,6 +121,8 @@ public class Unet {
                         pipeline.doRead(buffer);
                     } catch (Exception exception) {
                         pipeline.exceptionCaught(exception);
+                    } finally {
+                        bufferPool.release(buffer);
                     }
                 });
             }
