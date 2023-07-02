@@ -72,11 +72,28 @@ public class Promise<T> implements RunnableFuture<T> {
     }
 
     @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+    public T get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException, ExecutionException {
         if (latch.await(timeout, unit)) {
+            if (exceptionReference.get() != null) {
+                throw new ExecutionException(exceptionReference.get());
+            }
             return resultReference.get();
         }
         throw new TimeoutException("Time out");
+    }
+
+    public Promise<T> setSuccess(T result) {
+        resultReference.set(result);
+        isDone.set(true);
+        latch.countDown();
+        return this;
+    }
+
+    public Promise<T> setFailure(Exception exception) {
+        exceptionReference.set(exception);
+        isDone.set(true);
+        latch.countDown();
+        return this;
     }
 
     public void sync() throws InterruptedException, ExecutionException {

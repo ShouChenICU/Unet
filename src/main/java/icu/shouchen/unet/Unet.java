@@ -53,7 +53,7 @@ public class Unet {
      * @param size Thread pool size
      */
     private synchronized void initEventLoopExecutor(int size) {
-        if (size <= 0) {
+        if (size == 0) {
             size = UnetConstant.CORE_COUNT;
         }
         eventLoopExecutor = new ThreadPoolExecutor(
@@ -87,6 +87,11 @@ public class Unet {
         return promise;
     }
 
+    public Unet execute(Runnable runnable) {
+        eventLoopExecutor.execute(runnable);
+        return this;
+    }
+
     public void close() {
         selectionKey.cancel();
         try {
@@ -117,6 +122,7 @@ public class Unet {
                 eventLoopExecutor.execute(() -> {
                     try {
                         buffer.flip();
+                        UnetContext.unet(this);
                         UnetContext.address(address);
                         pipeline.doRead(buffer);
                     } catch (Exception exception) {
