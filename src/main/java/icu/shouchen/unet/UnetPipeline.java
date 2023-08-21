@@ -15,15 +15,19 @@ import java.util.function.Consumer;
  * @date 2023/6/15
  */
 public class UnetPipeline {
-    private final DatagramChannel datagramChannel;
     private final List<DataHandler> inboundHandlers;
     private final List<DataHandler> outboundHandlers;
+    private DatagramChannel datagramChannel;
     private Consumer<Exception> exceptionConsumer;
 
-    public UnetPipeline(DatagramChannel channel) {
-        datagramChannel = channel;
+    public UnetPipeline() {
         inboundHandlers = new LinkedList<>();
         outboundHandlers = new LinkedList<>();
+    }
+
+    UnetPipeline datagramChannel(DatagramChannel datagramChannel) {
+        this.datagramChannel = datagramChannel;
+        return this;
     }
 
     public UnetPipeline addInboundHandler(DataHandler handler) {

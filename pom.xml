@@ -6,7 +6,7 @@
 
     <groupId>icu.shouchen</groupId>
     <artifactId>Unet</artifactId>
-    <version>0.1.2-SNAPSHOT</version>
+    <version>0.2.2-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>

@@ -27,23 +27,24 @@ public class Unet {
     private ExecutorService eventLoopExecutor;
 
     public static Unet spawn(UnetConfig config) throws IOException {
-        return new Unet(
-                config.bindPort(),
-                config.eventLoopExecutorSize(),
-                config.bufferSize()
-        );
+        return new Unet(config);
     }
 
-    private Unet(int port, int eventExecutorSize, int bufferSize) throws IOException {
-        initEventLoopExecutor(eventExecutorSize);
-        bufferPool = new BufferPool(bufferSize, true, eventExecutorSize, eventExecutorSize);
+    private Unet(UnetConfig config) throws IOException {
+        initEventLoopExecutor(config.eventLoopExecutorSize());
+        bufferPool = new BufferPool(
+                config.bufferSize(),
+                true,
+                config.eventLoopExecutorSize(),
+                config.eventLoopExecutorSize()
+        );
         selector = Selector.open();
         datagramChannel = DatagramChannel.open();
         datagramChannel.socket().setBroadcast(true);
         datagramChannel.configureBlocking(false);
-        pipeline = new UnetPipeline(datagramChannel);
+        pipeline = config.pipeline().datagramChannel(datagramChannel);
         selectionKey = datagramChannel.register(selector, SelectionKey.OP_READ);
-        datagramChannel.bind(new InetSocketAddress(port));
+        datagramChannel.bind(new InetSocketAddress(config.bindPort()));
         eventLoopExecutor.execute(this::selectLoop);
     }
 
@@ -64,6 +65,10 @@ public class Unet {
                 new LinkedBlockingQueue<>(UnetConstant.MAX_JOB_COUNT),
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
+    }
+
+    public DatagramChannel datagramChannel() {
+        return datagramChannel;
     }
 
     /**

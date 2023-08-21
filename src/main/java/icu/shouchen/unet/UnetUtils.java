@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class UnetUtils {
     public static String buf2str(ByteBuffer buffer) {
-        byte[] bytes = new byte[buffer.limit()];
+        byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
         return new String(bytes, StandardCharsets.UTF_8);
     }
